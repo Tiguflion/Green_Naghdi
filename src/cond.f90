@@ -212,6 +212,9 @@ SUBROUTINE Cond_bord(W)
 	INTEGER :: i
 	REAL(rp), DIMENSION(Nx) :: h_sol, u_sol, w_sol, sig_sol
 	REAL(rp), DIMENSION(4) :: F0,FNx
+	
+CALL h_theo(X,date,h_sol)
+CALL u_theo(X,date,u_sol)
 
 	!-- Conditions de Wall, ce qui implique que le flux en 0 est nul, aisni que le flux en Nx + 1
 CALL flux_godunov_WB_Bord_Wall(W,X,F0,FNx,Nx,g)

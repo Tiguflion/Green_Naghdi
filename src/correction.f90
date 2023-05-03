@@ -41,10 +41,9 @@ SUBROUTINE Correction(W,Ne)
 	!		WRITE(*,*) i, B(i)
 	!	END IF 
 	!END DO 
-	CALL res_Chol(Ne, A, U, B)
-
-
-
+	CALL res_Chol(Ne, A, U, B)	
+	
+	
 
 	!CALL gauss_seidel (Nx, A, U, B) !Faire un Choleksy
 	!WRITE(*,*) 'B :'

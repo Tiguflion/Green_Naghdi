@@ -7,7 +7,7 @@
 0.		  	  :: Coefficient de frottement 
 0.01			  :: Hauteur d'eau moyenne
 .5			  :: Amplitude de la vague 
-0.4			  :: Noeud de la vague initiale  
+0.5			  :: Noeud de la vague initiale  
 
 
 
