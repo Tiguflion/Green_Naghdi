@@ -1,0 +1,13 @@
+0.,   1 		  :: Xdeb, Xfin
+1000		          :: nx
+0.3		  	  :: Tfin
+1000			  :: (variable inutile pour l'instant) Nombres de temps d'observations pour la marée
+2			  :: (variable inutile pour l'instant) 1=Lac au Repos 2  = Ecoulement sous critique 3 = Ecoulement torentiel sans chocs 4 = Ecoulement torentiel avec choc 5 = Transition Sec - Mouillé 6 = vague
+3		  	  :: (variable inutile pour l'instant) Type de Topographie : 1 = bosse, 2 = pente, 3 = plat 
+0.		  	  :: Coefficient de frottement 
+0.01			  :: Hauteur d'eau moyenne
+0.5			  :: Amplitude de la vague 
+0.5			  :: Noeud de la vague initiale  
+
+
+
