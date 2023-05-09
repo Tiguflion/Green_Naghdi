@@ -161,5 +161,75 @@ END FUNCTION Cholesky
       
 	
 	
+	
+	
 
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!		OPERATION SUR DES MATRICES CREUSES 
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+
+
+
+
+	FUNCTION Cholesky_creux(n,Ne,vois, pos_diag, A_Creux)
+
+	IMPLICIT NONE 
+
+	INTEGER :: n
+	INTEGER :: Ne
+	INTEGER, DIMENSION(n) :: vois
+	INTEGER, DIMENSION(Ne+1) :: pos_diag 
+	REAL(rp), DIMENSION(n) :: A_Creux
+	
+	
+	REAL(rp), DIMENSION(n) :: Cholesky_creux
+	REAL(rp), DIMENSION(n) :: L
+	REAL(rp) :: temp
+	INTEGER :: i, j, k, m, p, compteur 
+	
+	Cholesky_creux = 0._rp
+	L = 0._rp
+	DO i = 1, Ne 
+		DO j = pos_diag(i) + 1, pos_diag(i+1) - 1
+			IF (vois(j) < i) THEN  
+				L(pos_diag(i)) = A_creux(pos_diag(i)) - L(j)**2
+			END IF 
+		END DO 
+		
+		DO j = pos_diag(i)+1,pos_diag(i+1)-1
+			IF(vois(j) > i) THEN 
+				DO k = pos_diag(vois(j))+1, pos_diag(vois(j)+1) -1
+					IF (vois(k) == i) THEN  	
+						DO m = pos_diag(j) + 1,pos_diag(i+1) - 1
+							IF(vois(m) < vois(j)-1) THEN 
+								p = pos_diag(vois(i))+1
+								compteur = 0
+								write(*,*) vois(k),vois(p),vois(m),i
+								DO WHILE(p /= pos_diag(vois(i)+1) .AND. compteur == 0)  
+									IF (vois(p) == vois(m)) THEN 
+										L(k) = A_creux(k) - L(p)*L(m)/L(pos_diag(i))
+										compteur = 1
+									END IF 
+									p = p+1
+								END DO 
+							END IF 
+						END DO 
+						L(j) = L(k)
+					END IF   
+				END DO 
+			END IF 	 
+		END DO 
+		
+	!	DO j = i+1,n
+	!		L(j,i) = (A(j,i) - dot_product(L(i,1:j-1),L(j,1:j-1)))/L(i,i)
+	!		L(i,j) = L(j,i) !-- Création de la parite inférieure
+	!	END DO
+	END DO 
+	
+	Cholesky_Creux = L	
+	RETURN 
+END FUNCTION Cholesky_Creux
 END MODULE mod_algebre 
