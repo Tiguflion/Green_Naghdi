@@ -174,62 +174,65 @@ END FUNCTION Cholesky
 
 
 
-	FUNCTION Cholesky_creux(n,Ne,vois, pos_diag, A_Creux)
+		!-- Fonction qui résouds le problème matriciel AU = L , à l'aide de la matrice A_creux, en utilisant la méthode de Gauss-Seidel : 
+! ! @ Variable d'entrées 
+ 
+!				N_coeff : Taille du vecteur des poids A_creux
+!				Ns : Nombre de points dans le maillage 
+!				A_Creux : Vecteur des poids
+!				A_cellule : Table des coefficients non nul de la matrice des poids 
+!				Coeff_Diag : Tableau des coefficients diagonaux (= Pos_Creux)
+!				Sec_mem : Second membre L
+!	@ Variable de sortie
+!				U : Solution du problème matriciel AU = L
 
-	IMPLICIT NONE 
 
-	INTEGER :: n
-	INTEGER :: Ne
-	INTEGER, DIMENSION(n) :: vois
-	INTEGER, DIMENSION(Ne+1) :: pos_diag 
-	REAL(rp), DIMENSION(n) :: A_Creux
-	
-	
-	REAL(rp), DIMENSION(n) :: Cholesky_creux
-	REAL(rp), DIMENSION(n) :: L
-	REAL(rp) :: temp
-	INTEGER :: i, j, k, m, p, compteur 
-	
-	Cholesky_creux = 0._rp
-	L = 0._rp
-	DO i = 1, Ne 
-		DO j = pos_diag(i) + 1, pos_diag(i+1) - 1
-			IF (vois(j) < i) THEN  
-				L(pos_diag(i)) = A_creux(pos_diag(i)) - L(j)**2
-			END IF 
-		END DO 
-		
-		DO j = pos_diag(i)+1,pos_diag(i+1)-1
-			IF(vois(j) > i) THEN 
-				DO k = pos_diag(vois(j))+1, pos_diag(vois(j)+1) -1
-					IF (vois(k) == i) THEN  	
-						DO m = pos_diag(j) + 1,pos_diag(i+1) - 1
-							IF(vois(m) < vois(j)-1) THEN 
-								p = pos_diag(vois(i))+1
-								compteur = 0
-								write(*,*) vois(k),vois(p),vois(m),i
-								DO WHILE(p /= pos_diag(vois(i)+1) .AND. compteur == 0)  
-									IF (vois(p) == vois(m)) THEN 
-										L(k) = A_creux(k) - L(p)*L(m)/L(pos_diag(i))
-										compteur = 1
-									END IF 
-									p = p+1
-								END DO 
-							END IF 
-						END DO 
-						L(j) = L(k)
-					END IF   
-				END DO 
-			END IF 	 
-		END DO 
-		
-	!	DO j = i+1,n
-	!		L(j,i) = (A(j,i) - dot_product(L(i,1:j-1),L(j,1:j-1)))/L(i,i)
-	!		L(i,j) = L(j,i) !-- Création de la parite inférieure
-	!	END DO
-	END DO 
-	
-	Cholesky_Creux = L	
-	RETURN 
-END FUNCTION Cholesky_Creux
+      SUBROUTINE gauss_seidel_creux (N_Coeff,Ns, A_Creux,Vois,Coeff_Diag,U,B)
+      INTEGER, INTENT(IN)  ::  Ns, N_Coeff
+      INTEGER :: i
+      INTEGER :: j
+      INTEGER :: k 
+      REAL(rp), DIMENSION(N_Coeff),  INTENT(IN)     ::  A_Creux
+      INTEGER, DIMENSION(N_Coeff),  INTENT(IN)     ::  Vois
+      INTEGER, DIMENSION(Ns+1), INTENT(IN) :: Coeff_Diag
+      REAL(rp), DIMENSION(Ns),    INTENT(IN)::  B
+      REAL(rp), DIMENSION(Ns),    INTENT(OUT)  ::  U
+		REAL(rp) :: ERR
+		REAL(rp) :: S
+		REAL(rp) :: R
+		k = 0
+		ERR = 1._rp
+		!U(:) = 0._rp
+		do while (ERR > 10E-10 .and. k < 20000)
+			k = k+1
+			ERR = 0._rp
+			do i = 1,Ns
+				R = B(i)/A_creux(Coeff_diag(i))
+				do j = 1, (Coeff_diag(i+1) - Coeff_diag(i))
+					R = R - A_Creux(j-1+Coeff_diag(i))*U(Vois(j-1 + Coeff_diag(i)))/A_creux(coeff_diag(i))
+				end do 			
+			
+				! Code original 
+				!S = 0
+				
+				!do j = 1, (Coeff_diag(i+1) - Coeff_diag(i))
+				!	S = S+A_Creux(j-1+Coeff_diag(i))*U(Vois(j-1 + Coeff_diag(i)))
+				!end do 
+				
+				!R = (B(i) - S)/A_Creux(Coeff_diag(i))
+				ERR = ERR + R*R
+				U(i) = U(i) + R
+				ERR = sqrt(ERR)
+				
+			end do
+		end do
+
+!
+      RETURN
+      END SUBROUTINE gauss_seidel_creux
+!
+
+
+
+
 END MODULE mod_algebre 

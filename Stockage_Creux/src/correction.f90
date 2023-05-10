@@ -26,10 +26,11 @@ SUBROUTINE Correction(W,ind_min,ind_max,Ne)
 	REAL(rp), DIMENSION(:)  , ALLOCATABLE :: B ! Second membre
 	REAL(rp), DIMENSION(:)  , ALLOCATABLE :: A_diag !- Coefficients diagonale de la matrice A
 	
+	INTEGER, DIMENSION(:)	, ALLOCATABLE :: vois_debug 
 	REAL(rp), DIMENSION(:)  , ALLOCATABLE :: vec_debug
 	REAL(rp), DIMENSION(Ne,Ne) :: Mat_debug 
 
-	INTEGER i,j
+	INTEGER i,j,k
 	
 
 
@@ -49,44 +50,61 @@ SUBROUTINE Correction(W,ind_min,ind_max,Ne)
 	
 	ALLOCATE(A_Creux(Nb_Vois))
 	ALLOCATE(Vois(Nb_Vois))
-	ALLOCATE(Vec_debug(Nb_vois))
+	ALLOCATE(Vec_debug(Ne))
 	
 	Vois(:) = 0
 	A_Creux(:) = 0._rp
-	
+	Vec_debug = 0._rp
 	
 	DO i = 1,Ne+1
 		Vois(pos_diag(i)) = i
 	END DO 
 	
 	!--- Si on utilise plusieurs opérateurs, ajouter une fonction de tri en dessous de diag_creux
-	DO i = 3,Ne-2
-		CALL DaDX_Creux(i,Ne,-W(1,ind_min:ind_max)**3/3._rp,pos_diag,vois,A_creux)
+	DO i = ind_min+2,ind_max-2
+		CALL DaDX_Creux(i,Ne,-(W(1,ind_min:ind_max)**3/3._rp),pos_diag,vois,A_creux)
 	END DO 
 	
-	CALL Diag_Creux(W(1,:),Ne, 0, Pos_diag,Vois, A_creux)
+	CALL Diag_Creux(W(1,ind_min:ind_max),Ne, 0, Pos_diag,Vois, A_creux)
 
 	!WRITE(*,*) pos_diag
 	!WRITE(*,*) Vois
 	!WRITE(*,*) size(Vois)
 
 
-	A = Diag(W(1,:),Ne,0) + DaDX(-(W(1,:)**3)/3._rp,dx,Ne)
-	B = W(2,:) + Da(W(1,:)*(W(4,:) + sqrt(3._rp)*W(3,:))/(2*sqrt(3._rp)),dx,Ne)
+	A = Diag(W(1,:),Ne,0) + DaDX(-(W(1,ind_min:ind_max)**3)/3._rp,dx,Ne)
+	B = W(2,:) + Da(W(1,ind_min:ind_max)*(W(4,ind_min:ind_max) + sqrt(3._rp)*W(3,ind_min:ind_max))/(2*sqrt(3._rp)),dx,Ne)
 	!READ(*,*)
 	
 
 	CALL Cond_Bord_coeff(Ne,A,B) !--- Modification des coefficients liés aux conditions aux bords
 	
 	CALL Cond_bord_Creux(Ne,W(1,ind_min:ind_max),pos_diag,Nb_vois,vois,A_creux)
+	
+	
+	!Mat_debug(:,:) = DaDX(Vec_debug,0.5_rp,Ne)
+	
+	
+	!Do i = 1,Nx
+	!	WRITE(*,*) Mat_debug(i,i),Mat_debug(i,min(Nx,i+2)),MAt_debug(i,max(1,i-2))
+	!END DO 
+	
+	!DO i = 1,Nx
+	!	DO j = 1,Nx
+	!		IF( abs(A(i,j) - A(j,i))> 1E-8) THEN 
+	!			WRITE(*,*) i,j,A(i,j),A(j,i)
+	!		END IF 
+	!	END DO
+	!END DO 
+	
+	!WRITE(*,*) A
+	!WRITE(*,*)
+	!WRITE(*,*) A_creux
+	!WRITE(*,*)
+	!WRITE(*,*) Vois
+	!READ(*,*)
 
-	WRITE(*,*) A
-	WRITE(*,*)
-	WRITE(*,*) A_creux
-	WRITE(*,*)
-	WRITE(*,*) Vois
-
-	READ(*,*)
+	!READ(*,*)
 	!WRITE(*,*) Diag(W(1,:),Ne,0) + DaDX(-(W(1,:)**3)/3._rp,dx,Ne)
 	!WRITE(*,*)
 	!WRITE(*,*) A 
@@ -98,16 +116,23 @@ SUBROUTINE Correction(W,ind_min,ind_max,Ne)
 	!END DO 
 	
 	
-	Vec_debug = Cholesky_creux(Nb_vois,Ne,vois, pos_diag, A_Creux)
-	Mat_debug = Cholesky(Ne,A)
+	CALL gauss_seidel_creux(Nb_vois,Ne, A_Creux,Vois,pos_diag,U,B)
 	
-	WRITE(*,*) Mat_debug
-	WRITE(*,*)
-	WRITE(*,*) Vec_debug
-	WRITE(*,*)
-	READ(*,*)
-	CALL res_Chol(Ne, A, U, B)	
+	!CALL res_Chol(Ne, A, Vec_debug, B)	
 
+	!DO i = 1,Nx
+	!	IF(abs(Vec_debug(i) - U(i)) > 10E-5) THEN 
+	!		WRITE(*,*) i, Vec_debug(i), U(i)
+	!	END IF 
+	!END DO 
+	!read(*,*)
+
+	!WRITE(*,*) U
+	!WRITE(*,*)
+	!WRITE(*,*) Vec_debug
+	!WRITE(*,*)
+	!READ(*,*)
+	
 	!CALL gauss_seidel (Nx, A, U, B) !Faire un Choleksy
 	!WRITE(*,*) 'B :'
 	
@@ -117,13 +142,38 @@ SUBROUTINE Correction(W,ind_min,ind_max,Ne)
 	
 	!vec_debug = matmul(A,U)
 	!DO i = 1,Nx
-	!	IF(abs(B(i)-vec_debug(i)) > 1E-5) then 
-	!		WRITE(*,*) i, B(i) - vec_debug(i), B(i), vec_debug(i)
+	!	IF(abs(U(i)-vec_debug(i)) > 1E-5) then 
+	!		WRITE(*,*) i, U(i) - vec_debug(i), U(i), vec_debug(i)
 	!	END IF 
 	!END DO 
 	!READ(*,*)
 	
-	!WRITE(*,*) norm2(matmul(A,U)-B)
+	!DO i = 1,Nx
+	!	DO j = pos_diag(i),pos_diag(i+1)-1
+	!		IF(abs(A(i,vois(j)) - A_Creux(j)) > 1E-8) THEN
+	!			write(*,*) i,vois(j), abs(A(i,vois(j)) - A_Creux(j)), A(i,vois(j)), A_Creux(j)
+	!			write(*,*) abs((W(1,i+1)**3)/3._rp - (W(1,i-1)**3)/3._rp)/(4*dx**2)
+	!			WRITE(*,*) A(i,i-2), A(i,i+2)
+	!			WRITE(*,*) A_Creux(j)
+	!		END IF 
+	!	END DO 
+	!END DO 
+	
+	!DO i = 1,Ne
+	!	DO j = pos_diag(i),pos_diag(i+1)-1
+	!		DO k = pos_diag(vois(j)),pos_diag(vois(j)+1) - 1
+	!			IF (vois(k) == i .and. abs(A_Creux(k) - A_creux(j)) > 10E-5) THEN
+	!				WRITE(*,*) vois(j),vois(k),A_creux(k), A_creux(j)
+	!			END IF 
+	!		END DO 
+	!	END DO 
+	!END DO 
+		
+	!WRITE(*,*) A_Creux(3)
+	!WRITE(*,*) pos_diag
+	!WRITE(*,*) vois
+	!READ(*,*)
+	!!WRITE(*,*) norm2(matmul(A,U)-B)
 	!READ(*,*)
 	CALL omega_sigma(Ne,U,omega,sigma)
 
@@ -156,11 +206,11 @@ IMPLICIT NONE
 	
 ! Faire une condition avec une variable choix qui vérifie si les variables sont allouées
 
-	ALLOCATE(A(Ne,Ne))
+	!ALLOCATE(A(Ne,Ne))
 	ALLOCATE(B(Ne),U(Ne))
 	ALLOCATE(omega(Ne),sigma(Ne))
 	ALLOCATE(Pos_diag(Ne+1))
-	A(:,:) = 0._rp
+	!A(:,:) = 0._rp
 	B(:) = 0._rp
 	omega(:) = 0._rp
 	sigma(:) = 0._rp
@@ -191,15 +241,15 @@ SUBROUTINE Cond_bord_Coeff(Ne,A,B)
 	!
 	!=========================================================================
 	
-	A(1,1) = W(1,1) + (W(1,2)**3 + W(1,1)**3)/(12._rp*dx**2)
-	A(1,2) = 	       (W(1,1)**3)       /(12._rp*dx**2) !- retirer le "-"
-	A(1,3) = 	      - (W(1,2)**3)	 /(12._rp*dx**2)
-	A(2,2) = W(1,2) + (W(1,3)**3 + W(1,1)**3)/(12._rp*dx**2)
-	A(2,4) =              -(W(1,3)**3)	 /(12._rp*dx**2)
+	!A(1,1) = W(1,1) + (W(1,2)**3 + W(1,1)**3)/(12._rp*dx**2)
+	!A(1,2) = 	       (W(1,1)**3)       /(12._rp*dx**2) !- retirer le "-"
+	!A(1,3) = 	      - (W(1,2)**3)	 /(12._rp*dx**2)
+	!A(2,2) = W(1,2) + (W(1,3)**3 + W(1,1)**3)/(12._rp*dx**2)
+	!A(2,4) =              -(W(1,3)**3)	 /(12._rp*dx**2)
 	
-	A(2,1) = A(1,2)
-	A(3,1) = A(1,3)
-	A(4,2) = A(2,4)
+	!A(2,1) = A(1,2)
+	!A(3,1) = A(1,3)
+	!A(4,2) = A(2,4)
 	
 
 	c1 = W(1,1)*(sqrt(3._rp)*W(3,1) + W(4,1))
@@ -215,16 +265,16 @@ SUBROUTINE Cond_bord_Coeff(Ne,A,B)
 	!
 	!=========================================================================
 	
-	A(Ne,Ne)    = W(1,Ne)    + (W(1,Ne)**3 + W(1,Ne-1)**3)  /(12._rp*dx**2)
-	A(Ne,Ne-1)  =		    W(1,Ne)**3	 	        /(12._rp*dx**2) !-- Retirer le "-" à cause des conditions aux bords 
-	A(Ne,Ne-2)  =		 -W(1,Ne-1)**3 			/(12._rp*dx**2)
-	A(Ne-1,Ne-1) = W(1,Ne-1) + (W(1,Ne)**3 + W(1,Ne-2)**3)  /(12._rp*dx**2)
-	A(Ne-1,Ne-3) = 		-(W(1,Ne - 2)**3)	        /(12._rp*dx**2)	
+	!A(Ne,Ne)    = W(1,Ne)    + (W(1,Ne)**3 + W(1,Ne-1)**3)  /(12._rp*dx**2)
+	!A(Ne,Ne-1)  =		    W(1,Ne)**3	 	        /(12._rp*dx**2) !-- Retirer le "-" à cause des conditions aux bords 
+	!A(Ne,Ne-2)  =		 -W(1,Ne-1)**3 			/(12._rp*dx**2)
+	!A(Ne-1,Ne-1) = W(1,Ne-1) + (W(1,Ne)**3 + W(1,Ne-2)**3)  /(12._rp*dx**2)
+	!A(Ne-1,Ne-3) = 		-(W(1,Ne - 2)**3)	        /(12._rp*dx**2)	
 	
 	
-	A(Ne-1,Ne) = A(Ne,Ne-1) 
-	A(Ne-2,Ne) =  A(Ne,Ne-2) 
-	A(Ne-3,Ne-1) = A(Ne-1,Ne-3)	
+	!A(Ne-1,Ne) = A(Ne,Ne-1) 
+	!A(Ne-2,Ne) =  A(Ne,Ne-2) 
+	!A(Ne-3,Ne-1) = A(Ne-1,Ne-3)	
 
 
 	cN =  W(1,Ne)  *(sqrt(3._rp)*W(3,Ne  ) + W(4,Ne  ))
@@ -256,9 +306,9 @@ SUBROUTINE Cond_bord_Creux(Ne,Vec,pos_diag,Nb_vois,vois,A_creux)
 	A_creux(2) = 	       (Vec(1)**3)       /(12._rp*dx**2) !- retirer le "-"
 	A_creux(3) = 	      - (Vec(2)**3)	 /(12._rp*dx**2)
 	A_creux(4) = Vec(2) + (Vec(3)**3 + Vec(1)**3)/(12._rp*dx**2)
-	A_creux(5) =          - (Vec(3)**3)	 /(12._rp*dx**2)
+	A_creux(5) =          - (Vec(1)**3)	 /(12._rp*dx**2)
+	A_creux(6) =          - (Vec(3)**3)      /(12._rp*dx**2)
 	A_creux(pos_diag(2) + 1) = A_Creux(pos_diag(1) + 1)
-	A_creux(pos_diag(2) + 2) = A_Creux(pos_diag(1) + 2)
 
 	vois(2) = 2
 	vois(3) = 3
@@ -266,12 +316,13 @@ SUBROUTINE Cond_bord_Creux(Ne,Vec,pos_diag,Nb_vois,vois,A_creux)
 	vois(6) = 4
 
 	
-	A_Creux(Pos_diag(Ne))    = W(1,Ne)    + (W(1,Ne)**3 + W(1,Ne-1)**3)  /(12._rp*dx**2)
-	A_Creux(Pos_diag(Ne)+2) =         W(1,Ne)**3	 	        /(12._rp*dx**2) !-- Retirer le "-" à cause des conditions aux bords 
-	A_Creux(Pos_diag(Ne)+1)  =		 -W(1,Ne-1)**3 			/(12._rp*dx**2)
-	A_Creux(Pos_diag(Ne-1) ) = W(1,Ne-1) + (W(1,Ne)**3 + W(1,Ne-2)**3)  /(12._rp*dx**2)
-	A_Creux(Pos_diag(Ne-1)+1) = 		-(W(1,Ne - 2)**3)	        /(12._rp*dx**2)	
+	A_Creux(Pos_diag(Ne))    = Vec(Ne)    + (Vec(Ne)**3 + Vec(Ne-1)**3)  /(12._rp*dx**2)
+	A_Creux(Pos_diag(Ne)+2) =         Vec(Ne)**3	 	        /(12._rp*dx**2) !-- Retirer le "-" à cause des conditions aux bords 
+	A_Creux(Pos_diag(Ne)+1)  =		 -(Vec(Ne-1)**3) 			/(12._rp*dx**2)
+	A_Creux(Pos_diag(Ne-1) ) = Vec(Ne-1) + (Vec(Ne)**3 + Vec(Ne-2)**3)  /(12._rp*dx**2)
+	A_Creux(Pos_diag(Ne-1)+1) = 		-(Vec(Ne - 2)**3)	        /(12._rp*dx**2)	
 	A_Creux(Pos_diag(Ne-1)+2) = A_creux(Pos_diag(Ne)+2)
+	!
 	
 	vois(Pos_diag(Ne)+1) = Ne-2
 	vois(Pos_diag(Ne)+2) = Ne-1

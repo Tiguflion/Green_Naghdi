@@ -143,7 +143,7 @@ FUNCTION DaDX(Vec,dx,Ne)
 	DaDX(:,:) = 0._rp
 	
 	DaDX(2:Ne-1,2:Ne-1) = -Diag( (vec(1:Ne-2) + vec(3:Ne))/(4._rp*dx**2) ,Ne-2,0) &
-	&+ Diag( vec(1:Ne-2)/(4._rp*dx**2),Ne-2,-2) + Diag( vec(3:Ne)/(4._rp*dx**2)  , Ne-2,2)
+	&+ Diag( vec(3:Ne)/(4._rp*dx**2),Ne-2,-2) + Diag( vec(3:Ne)/(4._rp*dx**2)  , Ne-2,2)
 
 
 END FUNCTION DaDX
@@ -220,9 +220,9 @@ SUBROUTINE Diag_creux(Vec,Ne, k, Pos_diag, Vois, A_creux)
 	
 	DO i = 1,Ne
 		DO j = Pos_diag(i), Pos_diag(i+1) - 1
-			IF(i+k == Vois(j) .or. Vois(j) == 0 ) then 
+			IF(i+k == Vois(j) .or. (Vois(j) == 0 .and. i+k > 0)) then 
 				Vois(j) = i+k
-				A_Creux(j) = Vec(i)
+				A_Creux(j) = A_creux(j) + Vec(i)
 				EXIT
 			END IF 
 		END DO 
@@ -251,6 +251,7 @@ SUBROUTINE DaDX_Creux(i,Ne,Vec,pos_diag,vois,A_creux)
 	
 	INTEGER k,j
 
+
 	Coeff(:) = 0._rp
 	
 	Pos(1) = i
@@ -261,19 +262,23 @@ SUBROUTINE DaDX_Creux(i,Ne,Vec,pos_diag,vois,A_creux)
 	Coeff(2) = Vec(i-1)/(4._rp*dx**2)
 	Coeff(3) = Vec(i+1)/(4._rp*dx**2)
 	
-	A_Creux(pos_diag(i)) = A_creux(pos_diag(i)) + Coeff(1)
+	!A_Creux(pos_diag(i)) = A_creux(pos_diag(i)) + Coeff(1)
 
 
 	!----- Shémas type de remplissage creux
-	k = 2
-	DO j = Pos_diag(i)+1, Pos_diag(i+1)-1
+	k = 1
+	DO j = Pos_diag(i), Pos_diag(i+1)-1
 		if((vois(j) == Pos(k) .or. vois(j) == 0) .and. k <= 3) then 
-			A_creux(j) = A_creux(j) + Coeff(k)
+			if(vois(j) == 0) then 
+				A_Creux(j) = Coeff(k)
+			else 
+				A_creux(j) = A_creux(j) + Coeff(k)
+			end if 
 			vois(j) = pos(k)
 			k = k+1
 		end if 
 	END DO 
-	 
+ 
 
 END SUBROUTINE DaDX_Creux
 
