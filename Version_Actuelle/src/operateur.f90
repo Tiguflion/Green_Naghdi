@@ -143,10 +143,141 @@ FUNCTION DaDX(Vec,dx,Ne)
 	DaDX(:,:) = 0._rp
 	
 	DaDX(2:Ne-1,2:Ne-1) = -Diag( (vec(1:Ne-2) + vec(3:Ne))/(4._rp*dx**2) ,Ne-2,0) &
-	&+ Diag( vec(1:Ne-2)/(4._rp*dx**2),Ne-2,-2) + Diag( vec(3:Ne)/(4._rp*dx**2)  , Ne-2,2)
+	&+ Diag( vec(3:Ne)/(4._rp*dx**2),Ne-2,-2) + Diag( vec(3:Ne)/(4._rp*dx**2)  , Ne-2,2)
 
 
 END FUNCTION DaDX
 
+
+
+
+
+
+
+
+
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!
+!					PARTIE 2 : FONCTIONS SUR DES MATRICES CREUSES
+!
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+
+
+
+
+
+
+
+
+
+!==============================================================================================================
+!
+!					FONCTION DE RECHERCHE DE VOISINS EN FONCTION DES OPERATEURS
+!
+!==============================================================================================================
+
+SUBROUTINE Vois_DaDX(i,Ne,Nb_Vois,pos_diag)
+
+	INTEGER 	      , INTENT(IN)    :: i
+	INTEGER		      , INTENT(IN)    :: Ne
+	INTEGER, DIMENSION(:) , INTENT(INOUT) :: pos_diag
+	INTEGER 	      , INTENT(INOUT) :: Nb_vois
+
+	INTEGER :: j
+	
+	Nb_Vois = Nb_vois+2
+	DO j = i+1,Ne+1
+		pos_diag(j) = pos_diag(j)+2
+	END DO 
+	
+END SUBROUTINE Vois_DaDX
+
+
+
+
+
+
+!==============================================================================================================
+!
+!					FONCTION D'OPERATEURS CREUX 
+!
+!==============================================================================================================
+
+
+SUBROUTINE Diag_creux(Vec,Ne, k, Pos_diag, Vois, A_creux)
+	INTEGER, INTENT(IN) :: Ne
+	INTEGER, INTENT(IN) :: k
+	INTEGER,  DIMENSION(:), INTENT(IN)    :: Pos_diag
+	REAL(rp), DIMENSION(:), INTENT(IN)    :: vec
+	INTEGER,  DIMENSION(:), INTENT(INOUT) :: Vois 
+	REAL(rp), DIMENSION(:), INTENT(INOUT) :: A_creux 
+	
+	INTEGER :: i,j
+	
+	DO i = 1,Ne
+		DO j = Pos_diag(i), Pos_diag(i+1) - 1
+			IF(i+k == Vois(j) .or. (Vois(j) == 0 .and. i+k > 0)) then 
+				Vois(j) = i+k
+				A_Creux(j) = A_creux(j) + Vec(i)
+				EXIT
+			END IF 
+		END DO 
+	END DO 
+
+
+END SUBROUTINE Diag_Creux
+
+
+
+
+
+
+SUBROUTINE DaDX_Creux(i,Ne,Vec,pos_diag,vois,A_creux)
+
+	INTEGER, DIMENSION(:),  INTENT(IN) :: pos_diag 
+	INTEGER,	        INTENT(IN) :: i
+	INTEGER, 	        INTENT(IN) :: Ne
+	REAL(rp), DIMENSION(:),	INTENT(IN) :: Vec
+	INTEGER, DIMENSION(:),  INTENT(INOUT) :: vois
+	REAL(rp), DIMENSION(:), INTENT(INOUT) :: A_creux
+	
+	
+	REAL(rp), DIMENSION(3) :: Coeff
+	INTEGER, DIMENSION(3) :: Pos
+	
+	INTEGER k,j
+
+
+	Coeff(:) = 0._rp
+	
+	Pos(1) = i
+	Pos(2) = i-2
+	Pos(3) = i+2
+	
+	Coeff(1) = -(Vec(i+1) + Vec(i-1))/(4._rp*dx**2)
+	Coeff(2) = Vec(i-1)/(4._rp*dx**2)
+	Coeff(3) = Vec(i+1)/(4._rp*dx**2)
+
+
+	!----- Shémas type de remplissage creux
+	k = 1
+	DO j = Pos_diag(i), Pos_diag(i+1)-1
+		if((vois(j) == Pos(k) .or. vois(j) == 0) .and. k <= 3) then 
+			if(vois(j) == 0) then 
+				A_Creux(j) = Coeff(k)
+			else 
+				A_creux(j) = A_creux(j) + Coeff(k)
+			end if 
+			vois(j) = pos(k)
+			k = k+1
+		end if 
+	END DO 
+ 
+
+END SUBROUTINE DaDX_Creux
 
 END MODULE mod_operateur 

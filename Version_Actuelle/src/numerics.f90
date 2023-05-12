@@ -29,7 +29,6 @@ INTEGER :: Nobs
 INTEGER :: niter
 INTEGER :: compt
 
-
 REAL(rp) :: H !-- Niveau d'eau moyen
 REAL(rp) :: A !-- Amplitude de la vague
 REAL(rp) :: x0 !-- Centre de la vague initiale

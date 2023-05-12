@@ -1,14 +1,14 @@
  Nombez d'éléments :        1000
 
  Variable h:
- Erreur moyenne  :   2.9198558387802035E-005
- Erreur inf :   7.0923812098941733E-004
+ Erreur moyenne  :   2.1491504039242694E-004
+ Erreur inf :   3.2613930541548625E-003
  Variable U:
- Erreur moyenne  :   7.3054782245947521E-004
- Erreur inf :   1.3426926578425633E-002
+ Erreur moyenne  :   6.4603870984439064E-003
+ Erreur inf :   8.9738090137592791E-002
  Variable W:
- Erreur moyenne  :   3.6339783776474837E-004
- Erreur inf :   8.7097718947231582E-003
+ Erreur moyenne  :   1.0656884633011307E-003
+ Erreur inf :   1.5810939303361964E-002
  Variable sigma :
- Erreur moyenne  :   2.0980783945640506E-004
- Erreur inf :   5.0285891479986532E-003
+ Erreur moyenne  :   6.1527552115918686E-004
+ Erreur inf :   9.1284500629368638E-003

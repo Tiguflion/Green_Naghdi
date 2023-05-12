@@ -213,20 +213,20 @@ SUBROUTINE Cond_bord(W)
 	REAL(rp), DIMENSION(Nx) :: h_sol, u_sol, w_sol, sig_sol
 	REAL(rp), DIMENSION(4) :: F0,FNx
 	
-CALL h_theo(X,date,h_sol)
-CALL u_theo(X,date,u_sol)
+!CALL h_theo(X,date,h_sol)
+!CALL u_theo(X,date,u_sol)
 
 	!-- Conditions de Wall, ce qui implique que le flux en 0 est nul, aisni que le flux en Nx + 1
 CALL flux_godunov_WB_Bord_Wall(W,X,F0,FNx,Nx,g)
 
 
 	     W(1,1) = W(1,2) !W(1,1) - dt/dx*(Flux(1,1) - F0(1))
-	     W(2,1) = W(2,2) !0._rp !W(2,1) - dt/dx*(Flux(2,1) - F0(2)) !-- La bathymétrie est identique aux indices 0 et 1
+	     W(2,1) = -W(2,2) !0._rp !W(2,1) - dt/dx*(Flux(2,1) - F0(2)) !-- La bathymétrie est identique aux indices 0 et 1
 	     W(3,1) = W(3,2) !W(3,1) - dt/dx*(Flux(3,1) - F0(3))
 	     W(4,1) = W(4,2) !- dt/dx*(Flux(4,1) - F0(4))
 	     
 	     W(1,Nx) = W(1,Nx-1) !W(1,Nx) - dt/dx*(FNx(1) - Flux(1,Nx))
-	     W(2,Nx) = W(2,Nx-1) !0._rp !W(2,Nx) - dt/dx*(FNx(2) - Flux(2,Nx)) !-- La bathymétrie est identique aux indices Nx et Nx+1
+	     W(2,Nx) = -W(2,Nx-1) !0._rp !W(2,Nx) - dt/dx*(FNx(2) - Flux(2,Nx)) !-- La bathymétrie est identique aux indices Nx et Nx+1
 	     W(3,Nx) = W(3,Nx-1) !W(3,Nx) - dt/dx*(FNx(3) - Flux(3,Nx))
 	     W(4,Nx) = W(4,Nx-1) !W(4,Nx) - dt/dx*(FNx(4) - Flux(4,Nx))
 	     

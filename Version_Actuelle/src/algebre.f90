@@ -161,5 +161,78 @@ END FUNCTION Cholesky
       
 	
 	
+	
+	
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!		OPERATION SUR DES MATRICES CREUSES 
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+
+
+
+
+		!-- Fonction qui résouds le problème matriciel AU = L , à l'aide de la matrice A_creux, en utilisant la méthode de Gauss-Seidel : 
+! ! @ Variable d'entrées 
+ 
+!				N_coeff : Taille du vecteur des poids A_creux
+!				Ns : Nombre de points dans le maillage 
+!				A_Creux : Vecteur des poids
+!				A_cellule : Table des coefficients non nul de la matrice des poids 
+!				Coeff_Diag : Tableau des coefficients diagonaux (= Pos_Creux)
+!				Sec_mem : Second membre L
+!	@ Variable de sortie
+!				U : Solution du problème matriciel AU = L
+
+
+      SUBROUTINE gauss_seidel_creux (N_Coeff,Ns, A_Creux,Vois,Coeff_Diag,U,B)
+      INTEGER, INTENT(IN)  ::  Ns, N_Coeff
+      INTEGER :: i
+      INTEGER :: j
+      INTEGER :: k 
+      REAL(rp), DIMENSION(N_Coeff),  INTENT(IN)     ::  A_Creux
+      INTEGER, DIMENSION(N_Coeff),  INTENT(IN)     ::  Vois
+      INTEGER, DIMENSION(Ns+1), INTENT(IN) :: Coeff_Diag
+      REAL(rp), DIMENSION(Ns),    INTENT(IN)::  B
+      REAL(rp), DIMENSION(Ns),    INTENT(OUT)  ::  U
+		REAL(rp) :: ERR
+		REAL(rp) :: S
+		REAL(rp) :: R
+		k = 0
+		ERR = 1._rp
+		!U(:) = 0._rp
+		do while (ERR > 10E-8 .and. k < 20000)
+			k = k+1
+			ERR = 0._rp
+			do i = 1,Ns
+				R = B(i)/A_creux(Coeff_diag(i))
+				do j = 1, (Coeff_diag(i+1) - Coeff_diag(i))
+					R = R - A_Creux(j-1+Coeff_diag(i))*U(Vois(j-1 + Coeff_diag(i)))/A_creux(coeff_diag(i))
+				end do 			
+			
+				! Code original 
+				!S = 0
+				
+				!do j = 1, (Coeff_diag(i+1) - Coeff_diag(i))
+				!	S = S+A_Creux(j-1+Coeff_diag(i))*U(Vois(j-1 + Coeff_diag(i)))
+				!end do 
+				
+				!R = (B(i) - S)/A_Creux(Coeff_diag(i))
+				ERR = ERR + R*R
+				U(i) = U(i) + R
+				ERR = sqrt(ERR)
+				
+			end do
+		end do
+
+!
+      RETURN
+      END SUBROUTINE gauss_seidel_creux
+!
+
+
+
 
 END MODULE mod_algebre 

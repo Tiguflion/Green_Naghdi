@@ -60,7 +60,7 @@ END IF
 	CALL Cond_bord(W) !Calcul de W(:,1) et W(:,Nx) avant la correction
 
 	
-	CALL Correction(W,Nx)
+	CALL Correction(W,1,Nx,Nx)
 	
 	CALL init_frame_data_names()
 	CALL h_theo(x,date,h_temp)
